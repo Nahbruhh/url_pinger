@@ -52,13 +52,16 @@ def monitor_urls(urls, ping_frequency, duration, use_duration, result_queue, sto
             data[url]["numbers"].append(len(data[url]["times"]))
             data[url]["elapsed"] = time.time() - start_time
             
+            # Send updated data to queue
             result_queue.put(data.copy())
         
         # Store latest data in session state
         st.session_state.last_data = data.copy()
         
+        # Sleep for ping frequency
         time.sleep(ping_frequency)
         
+        # Stop if all URLs have reached duration (if used)
         if use_duration and all(data[url]["elapsed"] >= duration for url in urls):
             stop_event.set()
 
@@ -76,10 +79,12 @@ def plot_url_data(data, url, placeholder):
     ax1.legend(fontsize=9)
     ax1.set_facecolor('#F5F6F5')
     
+    # Annotate latest response time
     if data["times"]:
         x, y = data["numbers"][-1], data["times"][-1]
         ax1.annotate(f'{y:.2f}s', (x, y), xytext=(5, 5), textcoords='offset points', fontsize=9, color='#008080')
     
+    # Status code plot
     ax2.plot(data["numbers"], data["codes"], 's-', color='#FF6F61', linewidth=2, markersize=6, 
              label=f'Status: {data["names"][-1] if data["names"] else "Unknown"}')
     ax2.set_title(f'Status Codes: {url_clean}\nRemaining: {max(0, st.session_state.duration - data["elapsed"] if st.session_state.use_duration else float("inf")):.1f}s', 
@@ -90,12 +95,14 @@ def plot_url_data(data, url, placeholder):
     ax2.legend(fontsize=9)
     ax2.set_facecolor('#F5F6F5')
     
+    # Annotate latest status code
     if data["codes"]:
         x, y = data["numbers"][-1], data["codes"][-1]
         ax2.annotate(f'{data["names"][-1]}', (x, y), xytext=(5, 5), textcoords='offset points', fontsize=9, color='#FF6F61')
     
     # Adjust layout
     plt.tight_layout()
+
     buffer = io.BytesIO()
     fig.savefig(buffer, format='png', bbox_inches='tight')
     buffer.seek(0)
@@ -196,6 +203,8 @@ def main():
                 except queue.Empty:
                     pass
                 time.sleep(0.1)
+
+        # After stopping, still show last plots
         elif st.session_state.last_data:
             for url in urls:
                 if url in st.session_state.last_data:
