@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+
+# Streamlit
+.streamlit/
+
+# Misc
+*.log
+*.ipynb_checkpoints
+*.ipynb
