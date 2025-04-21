@@ -131,12 +131,12 @@ def data_to_csv(data, url):
 
 
 def main():
-    st.title("URL Monitor")
+    st.title("🌐URL Monitor")
     
     # Input for URLs and timing
-    st.sidebar.subheader("Configure Monitoring")
-    urls_input = st.sidebar.text_area("Enter URLs (one per line):", "http://localhost:8501\nhttps://simxlab.work\nhttps://cog-calculator.streamlit.app/\nhttps://fea-nonlinear-prediction.streamlit.app/")
-    ping_frequency = st.sidebar.number_input("Ping Frequency (seconds between pings)", min_value=0.1, max_value=60.0, value=1.0, step=0.1)
+    st.sidebar.subheader("⚙️Configure Monitoring")
+    urls_input = st.sidebar.text_area("📡Enter URLs (one per line):", "http://localhost:8501\nhttps://simxlab.work\nhttps://cog-calculator.streamlit.app/\nhttps://fea-nonlinear-prediction.streamlit.app/",height=200)
+    ping_frequency = st.sidebar.number_input("⏱️Ping Frequency (seconds between pings)", min_value=0.1, max_value=60.0, value=2.0, step=0.1)
     use_duration = st.sidebar.checkbox("Specify Monitoring Duration", value=False)
     duration = st.sidebar.number_input("Monitoring Duration per URL (seconds)", min_value=1, max_value=3600, value=60, step=1, disabled=not use_duration)
     
@@ -156,7 +156,7 @@ def main():
     # Start/Stop buttons
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Start Monitoring") and not st.session_state.monitoring:
+        if st.button("▶️Start Monitoring") and not st.session_state.monitoring:
             if urls:
                 st.session_state.monitoring = True
                 st.session_state.stop_event.clear()
@@ -178,7 +178,7 @@ def main():
 
     # Stop Monitoring
     with col2:
-        if st.button("Stop Monitoring"):
+        if st.button("⏹️Stop Monitoring"):
             if st.session_state.monitoring:
                 st.session_state.stop_event.set()
                 st.session_state.monitoring = False  # Let main loop exit
@@ -209,35 +209,68 @@ def main():
                     plot_url_data(st.session_state.last_data[url], url, placeholders[url])
 
             # Download buttons
-            st.subheader("📥 Download Data")
             
-            col1, col2 = st.columns(2)
-            for url in urls:
-                if url in st.session_state.last_data:
-                    buffer = plot_url_data(st.session_state.last_data[url], url,placeholders[url])
-                    csv_data = data_to_csv(st.session_state.last_data, url)
-                    # Download buttons for CSV and PNG
-                    with col1:
-                        if csv_data:
-                            st.download_button(
-                                label=f" Download CSV - {url}",
-                                data=csv_data,
-                                file_name=f"{url.replace('http://', '').replace('https://', '').replace('/', '_')}_data.csv",
-                                mime="text/csv",
-                                key=f"{url}-csv"
-                            )
-                    with col2:
+            with st.expander("📥Download Options", expanded=True):
+                st.markdown("You can download the monitoring data as CSV or PNG plot.")
+                col1, col2 = st.columns(2)
+                for url in urls:
+                    if url in st.session_state.last_data:
+                        buffer = plot_url_data(st.session_state.last_data[url], url,placeholders[url])
+                        csv_data = data_to_csv(st.session_state.last_data, url)
+                        # Download buttons for CSV and PNG
+                        with col1:
+                            if csv_data:
+                                st.download_button(
+                                    label=f" Download CSV - {url}",
+                                    data=csv_data,
+                                    file_name=f"{url.replace('http://', '').replace('https://', '').replace('/', '_')}_data.csv",
+                                    mime="text/csv",
+                                    key=f"{url}-csv"
+                                )
+                        with col2:
 
-                        if buffer:
-                            st.download_button(
-                                label=f" Download Plot - {url}",
-                                data=buffer,
-                                file_name=f"{url.replace('http://', '').replace('https://', '').replace('/', '_')}_plot.png",
-                                mime="image/png",
-                                key=f"{url}-png"
-                            )
+                            if buffer:
+                                st.download_button(
+                                    label=f" Download Plot - {url}",
+                                    data=buffer,
+                                    file_name=f"{url.replace('http://', '').replace('https://', '').replace('/', '_')}_plot.png",
+                                    mime="image/png",
+                                    key=f"{url}-png"
+                                )
     else:
         st.info("Enter at least one URL to begin monitoring.")
+
+
+st.set_page_config(
+    page_title="URL Monitor",
+    page_icon="🌐",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+with st.expander("ℹ️ About this App"):
+    st.markdown("""
+    **🌐 URL Monitor** is a simple tool that helps you track the availability and response time of multiple URLs in real-time.
+
+    **Author**: Copyright (c) Nguyen Manh Tuan [GitHub](https://github.com/Nahbruhh) | [LinkedIn](https://www.linkedin.com/in/manh-tuan-nguyen19/) 
+
+    ### Features:
+    > - Enter one or more URLs and ping them at regular intervals
+    > - Visualize response time over time for each URL
+    > - Set a custom ping frequency and optional monitoring duration
+    > - Download monitoring data as **CSV** or **PNG plot**
+    > - Stop monitoring anytime and keep your results
+
+    ### Use Cases:
+    > - Keep your deployed web apps (e.g. Streamlit, Heroku, Onrender) alive and prevent idle timeout
+    > - Monitor development servers and endpoints during testing
+    > - Track public or private website uptime and response behavior
+    > - Use logs for performance analysis or debugging
+
+    > Built with ❤️ using Streamlit.
+    """, unsafe_allow_html=True)
+
+
 
 
 if __name__ == "__main__":
