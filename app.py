@@ -7,6 +7,7 @@ import queue
 import pandas as pd
 import seaborn as sns
 import io
+import re
 
 # Dictionary mapping HTTP status codes to descriptive names
 STATUS_CODE_NAMES = {
@@ -70,7 +71,8 @@ def plot_url_data(data, url, placeholder):
     
     # Response time plot
     ax1.plot(data["numbers"], data["times"], 'o-', color='#008080', linewidth=2, markersize=6, label='Response Time')
-    ax1.set_title(f'Response Time: {url}\nElapsed: {data["elapsed"]:.1f}s', fontsize=12, pad=10)
+    url_clean = re.sub(r'http[s]?://', '', url).split('/')[0] 
+    ax1.set_title(f'Response Time: {url_clean}\nElapsed: {data["elapsed"]:.1f}s', fontsize=12, pad=10)
     ax1.set_xlabel('Request Number', fontsize=10)
     ax1.set_ylabel('Response Time (s)', fontsize=10)
     ax1.grid(True, linestyle='--', alpha=0.7)
@@ -85,10 +87,10 @@ def plot_url_data(data, url, placeholder):
     # Status code plot
     ax2.plot(data["numbers"], data["codes"], 's-', color='#FF6F61', linewidth=2, markersize=6, 
              label=f'Status: {data["names"][-1] if data["names"] else "Unknown"}')
-    ax2.set_title(f'Status Codes: {url}\nRemaining: {max(0, st.session_state.duration - data["elapsed"] if st.session_state.use_duration else float("inf")):.1f}s', 
+    ax2.set_title(f'Status Codes: {url_clean}\nRemaining: {max(0, st.session_state.duration - data["elapsed"] if st.session_state.use_duration else float("inf")):.1f}s', 
                   fontsize=12, pad=10)
     ax2.set_xlabel('Request Number', fontsize=10)
-    ax2.set_ylabel('Status Code', fontsize=10)
+    # ax2.set_ylabel('Status Code', fontsize=10)
     ax2.grid(True, linestyle='--', alpha=0.7)
     ax2.legend(fontsize=9)
     ax2.set_facecolor('#F5F6F5')
@@ -135,7 +137,7 @@ def main():
     
     # Input for URLs and timing
     st.sidebar.subheader("⚙️Configure Monitoring")
-    urls_input = st.sidebar.text_area("📡Enter URLs (one per line):", "http://localhost:8501\nhttps://simxlab.work\nhttps://cog-calculator.streamlit.app/\nhttps://fea-nonlinear-prediction.streamlit.app/",height=200)
+    urls_input = st.sidebar.text_area("📡Enter URLs (one per line):", "http://localhost:8501\nhttps://simxlab.work\nhttps://google.com/\nhttps://-----.com/",height=200)
     ping_frequency = st.sidebar.number_input("⏱️Ping Frequency (seconds between pings)", min_value=0.1, max_value=60.0, value=2.0, step=0.1)
     use_duration = st.sidebar.checkbox("Specify Monitoring Duration", value=False)
     duration = st.sidebar.number_input("Monitoring Duration per URL (seconds)", min_value=1, max_value=3600, value=60, step=1, disabled=not use_duration)
@@ -217,11 +219,12 @@ def main():
                     if url in st.session_state.last_data:
                         buffer = plot_url_data(st.session_state.last_data[url], url,placeholders[url])
                         csv_data = data_to_csv(st.session_state.last_data, url)
+                        url_clean = re.sub(r'http[s]?://', '', url).split('/')[0]
                         # Download buttons for CSV and PNG
                         with col1:
                             if csv_data:
                                 st.download_button(
-                                    label=f" Download CSV - {url}",
+                                    label=f" Download CSV - {url_clean}",
                                     data=csv_data,
                                     file_name=f"{url.replace('http://', '').replace('https://', '').replace('/', '_')}_data.csv",
                                     mime="text/csv",
@@ -231,7 +234,7 @@ def main():
 
                             if buffer:
                                 st.download_button(
-                                    label=f" Download Plot - {url}",
+                                    label=f" Download Plot - {url_clean}",
                                     data=buffer,
                                     file_name=f"{url.replace('http://', '').replace('https://', '').replace('/', '_')}_plot.png",
                                     mime="image/png",
